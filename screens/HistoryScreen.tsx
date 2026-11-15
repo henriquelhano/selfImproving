@@ -40,11 +40,11 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Histórico</Text>
+      <Text style={styles.title}>History</Text>
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}
-        ListEmptyComponent={<Text>Ainda não tens check-ins.</Text>}
+        ListEmptyComponent={<Text>You don't have any check-ins yet.</Text>}
         renderItem={({ item }) => (
           <View style={styles.row}>
             <Text style={styles.emoji}>{EMOJIS[item.mood]}</Text>

@@ -5,11 +5,14 @@ import { supabase } from './lib/supabase'
 import AuthScreen from './screens/AuthScreen'
 import CheckInScreen from './screens/CheckInScreen'
 import HistoryScreen from './screens/HistoryScreen'
+import PathsScreen from './screens/PathsScreen'
+
+type Tab = 'today' | 'paths' | 'history'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'today' | 'history'>('today')
+  const [tab, setTab] = useState<Tab>('today')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -28,23 +31,37 @@ export default function App() {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        {tab === 'today' ? (
-          <CheckInScreen userId={session.user.id} />
-        ) : (
-          <HistoryScreen />
-        )}
+        {tab === 'today' && <CheckInScreen userId={session.user.id} />}
+        {tab === 'paths' && <PathsScreen userId={session.user.id} />}
+        {tab === 'history' && <HistoryScreen />}
       </View>
 
-      <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#ddd', paddingBottom: 24 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          borderTopWidth: 1,
+          borderTopColor: '#ddd',
+          paddingBottom: 24,
+        }}
+      >
         <TabButton label="Today" active={tab === 'today'} onPress={() => setTab('today')} />
+        <TabButton label="Paths" active={tab === 'paths'} onPress={() => setTab('paths')} />
         <TabButton label="History" active={tab === 'history'} onPress={() => setTab('history')} />
-        <TabButton label="Log Out" active={false} onPress={() => supabase.auth.signOut()} />
+        <TabButton label="Sign Out" active={false} onPress={() => supabase.auth.signOut()} />
       </View>
     </View>
   )
 }
 
-function TabButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function TabButton({
+  label,
+  active,
+  onPress,
+}: {
+  label: string
+  active: boolean
+  onPress: () => void
+}) {
   return (
     <Pressable onPress={onPress} style={{ flex: 1, padding: 16, alignItems: 'center' }}>
       <Text style={{ fontWeight: active ? '700' : '400' }}>{label}</Text>

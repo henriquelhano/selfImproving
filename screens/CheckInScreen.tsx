@@ -1,24 +1,14 @@
 import { useState } from 'react'
-import {
-  Alert,
-  Button,
-  Keyboard,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native'
+import {Alert, Button, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View} from 'react-native'
 import { supabase } from '../lib/supabase'
 import { todayLocal } from '../lib/dates'
 
 const MOODS = [
-  { value: 1, emoji: '😞', label: 'Mal' },
-  { value: 2, emoji: '😕', label: 'Em baixo' },
-  { value: 3, emoji: '😐', label: 'Assim-assim' },
-  { value: 4, emoji: '🙂', label: 'Bem' },
-  { value: 5, emoji: '😄', label: 'Ótimo' },
+  { value: 1, emoji: '😞', label: 'Bad' },
+  { value: 2, emoji: '😕', label: 'Not so good' },
+  { value: 3, emoji: '😐', label: 'Neutral' },
+  { value: 4, emoji: '🙂', label: 'Good' },
+  { value: 5, emoji: '😄', label: 'Great' },
 ]
 
 export default function CheckInScreen({ userId }: { userId: string }) {
@@ -51,7 +41,7 @@ export default function CheckInScreen({ userId }: { userId: string }) {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.container}>
-        <Text style={styles.title}>Como estás agora?</Text>
+        <Text style={styles.title}>How are you feeling now?</Text>
 
         <View style={styles.moods}>
           {MOODS.map((m) => (
@@ -71,7 +61,7 @@ export default function CheckInScreen({ userId }: { userId: string }) {
 
         <TextInput
           style={styles.input}
-          placeholder="Queres acrescentar alguma coisa? (opcional)"
+          placeholder="Do you want to add anything? (optional)"
           multiline
           value={note}
           onChangeText={(t) => {
@@ -81,12 +71,12 @@ export default function CheckInScreen({ userId }: { userId: string }) {
         />
 
         <Button
-          title={saving ? 'A guardar...' : 'Guardar'}
+          title={saving ? 'Saving...' : 'Save'}
           onPress={save}
           disabled={mood === null || saving}
         />
 
-        {justSaved && <Text style={styles.confirm}>Guardado ✓</Text>}
+        {justSaved && <Text style={styles.confirm}>Saved ✓</Text>}
       </View>
     </TouchableWithoutFeedback>
   )

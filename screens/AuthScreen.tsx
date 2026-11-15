@@ -40,9 +40,9 @@ export default function AuthScreen() {
         value={password}
         onChangeText={setPassword}
       />
-      <Button title="Entrar" onPress={signIn} disabled={loading} />
+      <Button title="Log In" onPress={signIn} disabled={loading} />
       <View style={{ height: 12 }} />
-      <Button title="Criar conta" onPress={signUp} disabled={loading} />
+      <Button title="Create Account" onPress={signUp} disabled={loading} />
     </View>
   )
 }
