@@ -1,14 +1,24 @@
 import { useState } from 'react'
-import {Alert, Button, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View} from 'react-native'
+import {
+  Alert,
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native'
 import { supabase } from '../lib/supabase'
 import { todayLocal } from '../lib/dates'
+import { Button, Input, Screen } from '../components/ui'
+import { colors, moodColors, space, typo } from '../lib/theme'
 
 const MOODS = [
-  { value: 1, emoji: '😞', label: 'Bad' },
-  { value: 2, emoji: '😕', label: 'Not so good' },
-  { value: 3, emoji: '😐', label: 'Neutral' },
-  { value: 4, emoji: '🙂', label: 'Good' },
-  { value: 5, emoji: '😄', label: 'Great' },
+  { value: 1, label: 'Rough' },
+  { value: 2, label: 'Low' },
+  { value: 3, label: 'Okay' },
+  { value: 4, label: 'Good' },
+  { value: 5, label: 'Great' },
 ]
 
 export default function CheckInScreen({ userId }: { userId: string }) {
@@ -29,10 +39,9 @@ export default function CheckInScreen({ userId }: { userId: string }) {
     })
     setSaving(false)
     if (error) {
-      Alert.alert('Erro', error.message)
+      Alert.alert('Error', error.message)
       return
     }
-    // Limpa o formulário para o próximo registo
     setMood(null)
     setNote('')
     setJustSaved(true)
@@ -40,71 +49,72 @@ export default function CheckInScreen({ userId }: { userId: string }) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={styles.container}>
-        <Text style={styles.title}>How are you feeling now?</Text>
+      <View style={{ flex: 1 }}>
+        <Screen>
+          <Text style={styles.title}>How are you right now?</Text>
 
-        <View style={styles.moods}>
-          {MOODS.map((m) => (
-            <Pressable
-              key={m.value}
-              onPress={() => {
-                setMood(m.value)
-                setJustSaved(false)
-              }}
-              style={[styles.mood, mood === m.value && styles.moodSelected]}
-            >
-              <Text style={styles.emoji}>{m.emoji}</Text>
-              <Text style={styles.moodLabel}>{m.label}</Text>
-            </Pressable>
-          ))}
-        </View>
+          <View style={styles.moods}>
+            {MOODS.map((m) => {
+              const selected = mood === m.value
+              const dimmed = mood !== null && !selected
+              return (
+                <Pressable
+                  key={m.value}
+                  onPress={() => {
+                    setMood(m.value)
+                    setJustSaved(false)
+                  }}
+                  style={styles.moodItem}
+                >
+                  <View
+                    style={[
+                      styles.dot,
+                      { backgroundColor: moodColors[m.value] },
+                      selected && styles.dotSelected,
+                      dimmed && styles.dotDimmed,
+                    ]}
+                  />
+                  <Text style={[styles.moodLabel, selected && styles.moodLabelSelected]}>
+                    {m.label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Do you want to add anything? (optional)"
-          multiline
-          value={note}
-          onChangeText={(t) => {
-            setNote(t)
-            setJustSaved(false)
-          }}
-        />
+          <Input
+            style={styles.note}
+            placeholder="Anything to add? (optional)"
+            multiline
+            value={note}
+            onChangeText={(t) => {
+              setNote(t)
+              setJustSaved(false)
+            }}
+          />
 
-        <Button
-          title={saving ? 'Saving...' : 'Save'}
-          onPress={save}
-          disabled={mood === null || saving}
-        />
+          <Button
+            title={saving ? 'Saving...' : 'Save'}
+            onPress={save}
+            disabled={mood === null || saving}
+          />
 
-        {justSaved && <Text style={styles.confirm}>Saved ✓</Text>}
+          {justSaved && <Text style={styles.confirm}>Saved</Text>}
+        </Screen>
       </View>
     </TouchableWithoutFeedback>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, paddingTop: 80 },
-  title: { fontSize: 26, fontWeight: '600', marginBottom: 24 },
-  moods: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  mood: {
-    alignItems: 'center',
-    padding: 8,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    width: 62,
-  },
-  moodSelected: { borderColor: '#4a7cff', backgroundColor: '#eef2ff' },
-  emoji: { fontSize: 32 },
-  moodLabel: { fontSize: 11, marginTop: 4, textAlign: 'center' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 90,
-    textAlignVertical: 'top',
-    marginBottom: 16,
-  },
-  confirm: { textAlign: 'center', marginTop: 16, fontSize: 16, color: '#2e7d32' },
+  title: { ...typo.title, marginBottom: space.xl },
+  moods: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.xl },
+  moodItem: { alignItems: 'center', width: 62 },
+  dot: { width: 48, height: 48, borderRadius: 24, borderWidth: 3, borderColor: 'transparent' },
+  dotSelected: { borderColor: colors.text },
+  dotDimmed: { opacity: 0.4 },
+  moodLabel: { ...typo.small, marginTop: space.sm },
+  moodLabelSelected: { color: colors.text, fontWeight: '600' },
+  note: { minHeight: 100, textAlignVertical: 'top' },
+  confirm: { ...typo.body, color: colors.success, textAlign: 'center', marginTop: space.md },
 })

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { FlatList, StyleSheet, Text, View } from 'react-native'
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { supabase } from '../lib/supabase'
+import { Screen } from '../components/ui'
+import { colors, moodColors, space, typo } from '../lib/theme'
 
-const EMOJIS = ['', '😞', '😕', '😐', '🙂', '😄']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 type CheckIn = {
   id: string
@@ -13,14 +15,12 @@ type CheckIn = {
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso)
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
   const hours = String(d.getHours()).padStart(2, '0')
   const minutes = String(d.getMinutes()).padStart(2, '0')
-  return `${day}/${month}/${d.getFullYear()} às ${hours}:${minutes}`
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${hours}:${minutes}`
 }
 
-export default function HistoryScreen() {
+export default function HistoryScreen({ userId }: { userId: string }) {
   const [items, setItems] = useState<CheckIn[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -36,40 +36,101 @@ export default function HistoryScreen() {
       })
   }, [])
 
-  if (loading) return null
+  function confirmDelete(item: CheckIn) {
+    Alert.alert('Delete this check-in?', 'This can’t be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteOne(item.id) },
+    ])
+  }
+
+  async function deleteOne(id: string) {
+    const { data, error } = await supabase
+      .from('check_ins')
+      .delete()
+      .eq('id', id)
+      .select('id')
+    if (error || !data || data.length === 0) {
+      Alert.alert('Error', error?.message ?? 'Couldn’t delete this check-in.')
+      return
+    }
+    setItems((prev) => prev.filter((i) => i.id !== id))
+  }
+
+  function confirmDeleteAll() {
+    Alert.alert(
+      'Delete all your check-ins?',
+      'This removes your whole history, including older entries, and can’t be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete all', style: 'destructive', onPress: deleteAll },
+      ]
+    )
+  }
+
+  async function deleteAll() {
+    const { data, error } = await supabase
+      .from('check_ins')
+      .delete()
+      .eq('user_id', userId)
+      .select('id')
+    if (error || !data || data.length === 0) {
+      Alert.alert('Error', error?.message ?? 'Couldn’t delete your history.')
+      return
+    }
+    setItems([])
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>History</Text>
-      <FlatList
-        data={items}
-        keyExtractor={(i) => i.id}
-        ListEmptyComponent={<Text>You don't have any check-ins yet.</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.emoji}>{EMOJIS[item.mood]}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.date}>{formatDateTime(item.created_at)}</Text>
-              {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
-            </View>
-          </View>
+    <Screen>
+      <View style={styles.header}>
+        <Text style={typo.title}>History</Text>
+        {items.length > 0 && (
+          <Pressable onPress={confirmDeleteAll} hitSlop={12}>
+            <Text style={styles.action}>Delete all</Text>
+          </Pressable>
         )}
-      />
-    </View>
+      </View>
+
+      {!loading && (
+        <FlatList
+          data={items}
+          keyExtractor={(i) => i.id}
+          contentContainerStyle={{ paddingBottom: space.lg }}
+          ListEmptyComponent={<Text style={typo.muted}>No check-ins yet.</Text>}
+          renderItem={({ item }) => (
+            <View style={styles.row}>
+              <View style={[styles.dot, { backgroundColor: moodColors[item.mood] }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.date}>{formatDateTime(item.created_at)}</Text>
+                {item.note ? <Text style={styles.note}>{item.note}</Text> : null}
+              </View>
+              <Pressable onPress={() => confirmDelete(item)} hitSlop={12}>
+                <Text style={styles.action}>Delete</Text>
+              </Pressable>
+            </View>
+          )}
+        />
+      )}
+    </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, paddingTop: 80 },
-  title: { fontSize: 26, fontWeight: '600', marginBottom: 16 },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: space.lg,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: space.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ccc',
+    borderBottomColor: colors.border,
   },
-  emoji: { fontSize: 28, marginRight: 14 },
-  date: { fontWeight: '600' },
-  note: { color: '#555', marginTop: 2 },
+  dot: { width: 20, height: 20, borderRadius: 10, marginRight: space.md },
+  date: { ...typo.body, fontWeight: '600' },
+  note: { ...typo.muted, marginTop: 2 },
+  action: { ...typo.small, marginLeft: space.md },
 })

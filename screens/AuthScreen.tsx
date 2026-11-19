@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Alert, StyleSheet, Text, View } from 'react-native'
 import { supabase } from '../lib/supabase'
+import { Button, Input, Screen } from '../components/ui'
+import { space, typo } from '../lib/theme'
 
 export default function AuthScreen() {
   const [email, setEmail] = useState('')
@@ -10,51 +12,55 @@ export default function AuthScreen() {
   async function signIn() {
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) Alert.alert('Erro', error.message)
+    if (error) Alert.alert('Error', error.message)
     setLoading(false)
   }
 
   async function signUp() {
     setLoading(true)
     const { error } = await supabase.auth.signUp({ email, password })
-    if (error) Alert.alert('Erro', error.message)
+    if (error) Alert.alert('Error', error.message)
     setLoading(false)
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bem-vindo</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        autoCapitalize="none"
-        value={password}
-        onChangeText={setPassword}
-      />
-      <Button title="Log In" onPress={signIn} disabled={loading} />
-      <View style={{ height: 12 }} />
-      <Button title="Create Account" onPress={signUp} disabled={loading} />
-    </View>
+    <Screen>
+      <View style={styles.content}>
+        <Text style={styles.title}>Welcome</Text>
+        <Text style={styles.subtitle}>A quiet place to check in with yourself.</Text>
+
+        <Input
+          placeholder="Email"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <Input
+          placeholder="Password"
+          secureTextEntry
+          autoCapitalize="none"
+          value={password}
+          onChangeText={setPassword}
+        />
+
+        <View style={styles.buttons}>
+          <Button title="Sign in" onPress={signIn} disabled={loading} />
+          <Button
+            title="Create account"
+            onPress={signUp}
+            disabled={loading}
+            variant="secondary"
+          />
+        </View>
+      </View>
+    </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 28, fontWeight: '600', marginBottom: 24 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
+  content: { flex: 1, justifyContent: 'center', paddingBottom: 64 },
+  title: { ...typo.title, marginBottom: space.sm },
+  subtitle: { ...typo.muted, marginBottom: space.xl },
+  buttons: { gap: space.sm, marginTop: space.sm },
 })
